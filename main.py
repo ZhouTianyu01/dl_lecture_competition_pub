@@ -12,7 +12,7 @@ from tqdm import tqdm
 from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
 from src.utils import set_seed
-
+#graycat
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def run(args: DictConfig):
