@@ -7,13 +7,14 @@ from torchvision import transforms
 
 
 class ThingsMEGDataset(torch.utils.data.Dataset):
-    def __init__(self, split: str, data_dir: str = "data") -> None:
+    def __init__(self, split: str, data_dir: str = "data", augment: bool = False) -> None:
         super().__init__()
         
         assert split in ["train", "val", "test"], f"Invalid split: {split}"
         self.split = split
         self.num_classes = 1854
-        
+        ##new
+        self.augment = augment
         self.X = torch.load(os.path.join(data_dir, f"{split}_X.pt"))
         self.subject_idxs = torch.load(os.path.join(data_dir, f"{split}_subject_idxs.pt"))
         
@@ -23,13 +24,42 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return len(self.X)
-
+    #insert noise
+    def augment_data(self, data):
+        # 
+        noise = torch.randn_like(data) * 0.01
+        data += noise
+        # 
+        shift = torch.randint(-10, 10, (1,)).item()
+        data = torch.roll(data, shifts=shift, dims=1)
+        # 
+        scale = 1.0 + 0.1 * (torch.rand(1).item() - 0.5)
+        data *= scale
+        # 
+        jitter = torch.randn_like(data) * 0.01
+        data += jitter
+        return data
+        
+    #insert noise 
+    def __getitem__(self, i):
+        if hasattr(self, "y"):
+            data, label, subject_idx = self.X[i], self.y[i], self.subject_idxs[i]
+            if self.augment and self.split == 'train':
+                data = self.augment_data(data)
+            return data, label, subject_idx
+        else:
+            data, subject_idx = self.X[i], self.subject_idxs[i]
+            if self.augment and self.split == 'train':
+                data = self.augment_data(data)
+            return data, subject_idx
+    """
     def __getitem__(self, i):
         if hasattr(self, "y"):
             return self.X[i], self.y[i], self.subject_idxs[i]
         else:
             return self.X[i], self.subject_idxs[i]
-        
+    """
+       
     @property
     def num_channels(self) -> int:
         return self.X.shape[1]
