@@ -24,17 +24,23 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return len(self.X)
-    #insert noise
+    #insert 
     def augment_data(self, data):
-        # add noise
+        # noise
         noise = torch.randn_like(data) * 0.01
         data += noise
-        # add random shift
+        # shift
         shift = torch.randint(-10, 10, (1,)).item()
         data = torch.roll(data, shifts=shift, dims=1)
+        # scaling
+        scale = 1.0 + 0.1 * (torch.rand(1).item() - 0.5)
+        data *= scale
+        # jitter
+        jitter = torch.randn_like(data) * 0.01
+        data += jitter
         return data
-        
-    #insert noise 
+    
+    #To training dataset
     def __getitem__(self, i):
         if hasattr(self, "y"):
             data, label, subject_idx = self.X[i], self.y[i], self.subject_idxs[i]
